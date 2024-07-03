@@ -8,8 +8,9 @@ Big thanks to @bucdany for his code review and multiple advices!
 """
 
 from colorsys import rgb_to_hls, hls_to_rgb
+from pprint import pprint
 
-from check_hex import _check_hex
+from check_hex import check_hex
 
 
 def convert_hex_to_rvb(hex_value: str) -> tuple:
@@ -27,7 +28,7 @@ def convert_hex_to_rvb(hex_value: str) -> tuple:
     >>> convert_hex_to_rvb("#FFC0CB")
     (255, 192, 203)
     """
-    hex_value = _check_hex(hex_value)
+    hex_value = check_hex(hex_value)
     return tuple(int(hex_value[i:i + 2], 16) for i in range(1, len(hex_value), 2))
 
 
@@ -43,8 +44,7 @@ def convert_rvb_to_hex(rvb: tuple) -> str:
     >>> convert_rvb_to_hex((0, 0, 0))
     '#000000'
     """
-    return f"#{"".join(f"{rvb[i]:02x}" for i in range(3))}"  # rvb[0]:02x}{rvb[1]:02x}{rvb[2]:02x
-
+    return f"#{"".join(f"{color:02x}" for color in rvb)}"
 
 # endregion
 
@@ -65,15 +65,12 @@ def get_color_types(hex_value: str) -> dict:
     >>> get_color_types("#19021e")
     {'hex': '#19021e', 'rvb': [25, 2, 30], 'tsl_norm': ('289°', '88%', '6%'), 'tsl': (0.8035714285714285, 0.875, 0.06274509803921569)}
     """
-    red, green, blue = convert_hex_to_rvb(hex_value)
-    h, l, s = rgb_to_hls(*[color / 255 for color in (red, green, blue)])
-    h_norm, s_norm, l_norm = (round(val) for val in (carac * (360 if carac == h else 100)
-                                                     for carac in (h, s, l)))
+    rvb = convert_hex_to_rvb(hex_value)
+    h, l, s = rgb_to_hls(*(color / 255 for color in rvb))
 
     return {"hex": hex_value,
-            "rvb": [red, green, blue],
-            "tsl_norm": tuple(f"{carac}{'°' if carac == h_norm else '%'}"
-                              for carac in (h_norm, s_norm, l_norm)),
+            "rvb": [*rvb],
+            "tsl_norm": (f"{round(h * 360)}°", *(f"{val:.0%}" for val in (s, l))),
             "tsl": (h, s, l)}
 
 
@@ -96,8 +93,6 @@ def get_complementary(hex_value: str) -> str:
 
 
 if __name__ == '__main__':
-    from pprint import pprint
-
     hex_color = "#19021e"
     print(f"Voici le dictionnaire associé à la couleur '{hex_color}':")
     pprint(get_color_types(hex_color))
